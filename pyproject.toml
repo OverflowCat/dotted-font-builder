@@ -3,17 +3,18 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pixel-font-builder"
+name = "dotted-font-builder"
 version = "0.0.28"
-description = "A library that helps create pixel style fonts."
+description = "A library that helps create dotted style fonts."
 readme = "README.md"
 license = { text = "MIT License" }
 requires-python = ">=3.11"
 authors = [
+    { name = "OverflowCat" },
     { name = "TakWolf" },
 ]
 maintainers = [
-    { name = "TakWolf" },
+    { name = "OverflowCat" },
 ]
 keywords = ["font", "pixel"]
 classifiers = [
@@ -26,12 +27,14 @@ dependencies = [
     "fonttools[woff]>=4.55.0",
     "bdffont>=0.0.26",
     "pcffont>=0.0.15",
+    "pytest>=8.3.3",
+    "pypng>=0.20220715.0",
 ]
 
 [project.urls]
-homepage = "https://github.com/TakWolf/pixel-font-builder"
-source = "https://github.com/TakWolf/pixel-font-builder"
-issues = "https://github.com/TakWolf/pixel-font-builder/issues"
+homepage = "https://github.com/OverflowCat/dotted-font-builder"
+source   = "https://github.com/OverflowCat/dotted-font-builder"
+issues   = "https://github.com/OverflowCat/dotted-font-builder/issues"
 
 [tool.pytest.ini_options]
 pythonpath = [

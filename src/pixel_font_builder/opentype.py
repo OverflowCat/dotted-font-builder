@@ -53,6 +53,10 @@ class Flavor(StrEnum):
     WOFF = 'woff'
     WOFF2 = 'woff2'
 
+class Family(StrEnum):
+    PIXEL = 'pixel'
+    DOTTED = 'dotted'
+
 
 def _create_name_strings(meta_info: MetaInfo) -> dict[str, str]:
     """
@@ -233,8 +237,76 @@ def _create_glyph(glyph: Glyph, outlines: list[list[tuple[int, int]]], px_to_uni
     else:
         return pen.getCharString()
 
+def _create_circle_bezier(cx: float, cy: float, radius: float) -> list[tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]]:
+    K = radius * 0.55228  # 控制点的偏移量
 
-def _get_glyph_with_cache(glyph: Glyph, px_to_units: int, is_ttf: bool) -> OTFGlyph | TTFGlyph:
+    # 定义圆的四个象限的路径段
+    path = [
+        # 第一象限
+        ((cx + radius, cy),
+         (cx + radius, cy + K),
+         (cx + K, cy + radius),
+         (cx, cy + radius)),
+
+        # 第二象限
+        ((cx, cy + radius),
+         (cx - K, cy + radius),
+         (cx - radius, cy + K),
+         (cx - radius, cy)),
+
+        # 第三象限
+        ((cx - radius, cy),
+         (cx - radius, cy - K),
+         (cx - K, cy - radius),
+         (cx, cy - radius)),
+
+        # 第四象限
+        ((cx, cy - radius),
+         (cx + K, cy - radius),
+         (cx + radius, cy - K),
+         (cx + radius, cy)),
+    ]
+
+    return path
+
+def _draw_circle(pen: OTFGlyphPen | TTFGlyphPen, cx: float, cy: float, radius: float) -> OTFGlyph:
+    circle_path = _create_circle_bezier(cx, cy, radius)
+
+    for segment in circle_path:
+        start_point, control1, control2, end_point = segment
+
+        if segment == circle_path[0]:
+            pen.moveTo(start_point)
+        pen.curveTo(control1, control2, end_point)
+
+    pen.closePath()
+
+def _create_dotted_glyph(glyph: Glyph, px_to_units: int, is_ttf: bool) -> OTFGlyph | TTFGlyph:
+    # create circles rather than rects. we do not need to create outlines for this.
+    if is_ttf:
+        pen = TTFGlyphPen()
+    else:
+        pen = OTFGlyphPen(glyph.advance_width * px_to_units, None)
+
+    for y in range(glyph.height):
+        for x in range(glyph.width):
+            if glyph.bitmap[y][x] > 0:
+                cx = (x + 0.5) * px_to_units
+                # 转换左上角原点坐标系为左下角原点坐标系
+                cy = (glyph.height - y - 0.5) * px_to_units
+                radius = 0.5 * px_to_units
+                _draw_circle(pen, cx, cy, radius)
+
+    if is_ttf:
+        return pen.glyph()
+    else:
+        return pen.getCharString()
+
+
+
+
+def _get_glyph_with_cache(glyph: Glyph, px_to_units: int, is_ttf: bool,
+                          family: Family = Family.DOTTED) -> OTFGlyph | TTFGlyph:
     cache_tag = f'{glyph.advance_width}#{glyph.horizontal_origin}#{glyph.bitmap}'.replace(' ', '')
     if getattr(glyph, _CACHE_NAME_TAG, None) != cache_tag:
         setattr(glyph, _CACHE_NAME_OUTLINES, None)
@@ -242,27 +314,39 @@ def _get_glyph_with_cache(glyph: Glyph, px_to_units: int, is_ttf: bool) -> OTFGl
         setattr(glyph, _CACHE_NAME_TTF_GLYPH, None)
         setattr(glyph, _CACHE_NAME_TAG, cache_tag)
 
-    outlines = getattr(glyph, _CACHE_NAME_OUTLINES, None)
-    if outlines is None:
-        outlines = _create_outlines(glyph.bitmap, px_to_units)
-        setattr(glyph, _CACHE_NAME_OUTLINES, outlines)
+    if family == Family.PIXEL:
+        outlines = getattr(glyph, _CACHE_NAME_OUTLINES, None)
+        if outlines is None:
+            outlines = _create_outlines(glyph.bitmap, px_to_units)
+            setattr(glyph, _CACHE_NAME_OUTLINES, outlines)
 
-    cache_name_xtf_glyph = _CACHE_NAME_TTF_GLYPH if is_ttf else _CACHE_NAME_OTF_GLYPH
-    xtf_glyph = getattr(glyph, cache_name_xtf_glyph, None)
-    if xtf_glyph is None:
-        xtf_glyph = _create_glyph(glyph, outlines, px_to_units, is_ttf)
-        setattr(glyph, cache_name_xtf_glyph, xtf_glyph)
-    return xtf_glyph
+        cache_name_xtf_glyph = _CACHE_NAME_TTF_GLYPH if is_ttf else _CACHE_NAME_OTF_GLYPH
+        xtf_glyph = getattr(glyph, cache_name_xtf_glyph, None)
+        if xtf_glyph is None:
+            xtf_glyph = _create_glyph(glyph, outlines, px_to_units, is_ttf)
+            setattr(glyph, cache_name_xtf_glyph, xtf_glyph)
+        return xtf_glyph
+    elif family == Family.DOTTED:
+        cache_name_xtf_glyph = _CACHE_NAME_TTF_GLYPH if is_ttf else _CACHE_NAME_OTF_GLYPH
+        xtf_glyph = getattr(glyph, cache_name_xtf_glyph, None)
+        if xtf_glyph is None:
+            xtf_glyph = _create_dotted_glyph(glyph, px_to_units, is_ttf)
+            setattr(glyph, cache_name_xtf_glyph, xtf_glyph)
+        return xtf_glyph
+    else:
+        raise ValueError(f"Unknown font family: {family}")
 
 
-def create_builder(context: 'pixel_font_builder.FontBuilder', is_ttf: bool, flavor: Flavor | None = None) -> FontBuilder:
+def create_builder(context: 'pixel_font_builder.FontBuilder', is_ttf: bool,
+                   family: Family = Family.DOTTED,
+                   flavor: Flavor | None = None) -> FontBuilder:
     config = context.opentype_config
     font_metric = context.font_metric * config.px_to_units
     meta_info = context.meta_info
     character_mapping = context.character_mapping
     glyph_order, name_to_glyph = context.prepare_glyphs()
 
-    builder = FontBuilder(font_metric.font_size, isTTF=is_ttf)
+    builder = FontBuilder(font_metric.font_size, isTTF=is_ttf, glyphDataFormat=1)
 
     if meta_info.created_time is not None:
         setattr(builder.font['head'], 'created', timeTools.timestampSinceEpoch(meta_info.created_time.timestamp()))
@@ -275,7 +359,7 @@ def create_builder(context: 'pixel_font_builder.FontBuilder', is_ttf: bool, flav
     builder.setupGlyphOrder(glyph_order)
     xtf_glyphs = {}
     for glyph_name, glyph in name_to_glyph.items():
-        xtf_glyphs[glyph_name] = _get_glyph_with_cache(glyph, config.px_to_units, is_ttf)
+        xtf_glyphs[glyph_name] = _get_glyph_with_cache(glyph, config.px_to_units, is_ttf, family)
     if is_ttf:
         builder.setupGlyf(xtf_glyphs)
     else:

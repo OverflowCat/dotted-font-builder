@@ -53,13 +53,13 @@ class FontBuilder:
         return glyph_order, name_to_glyph
 
     def to_otf_builder(self, flavor: opentype.Flavor | None = None) -> fontTools.fontBuilder.FontBuilder:
-        return opentype.create_builder(self, False, flavor)
+        return opentype.create_builder(self, False, flavor=flavor)
 
     def save_otf(self, file_path: str | PathLike[str], flavor: opentype.Flavor | None = None):
         self.to_otf_builder(flavor).save(file_path)
 
     def to_ttf_builder(self, flavor: opentype.Flavor | None = None) -> fontTools.fontBuilder.FontBuilder:
-        return opentype.create_builder(self, True, flavor)
+        return opentype.create_builder(self, True, flavor=flavor)
 
     def save_ttf(self, file_path: str | PathLike[str], flavor: opentype.Flavor | None = None):
         self.to_ttf_builder(flavor).save(file_path)
