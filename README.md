@@ -1,14 +1,14 @@
-# Pixel Font Builder
+# Dotted Font Builder
 
 [![Python](https://img.shields.io/badge/python-3.11-brightgreen)](https://www.python.org)
-[![PyPI](https://img.shields.io/pypi/v/pixel-font-builder)](https://pypi.org/project/pixel-font-builder/)
+[![PyPI](https://img.shields.io/pypi/v/dotted-font-builder)](https://pypi.org/project/dotted-font-builder/)
 
-A library that helps create pixel style fonts.
+A library that helps create dotted style fonts.
 
 ## Installation
 
 ```shell
-pip install pixel-font-builder
+pip install dotted-font-builder
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ import datetime
 import shutil
 
 from examples import build_dir
-from pixel_font_builder import FontBuilder, WeightName, SerifStyle, SlantStyle, WidthStyle, Glyph, opentype
+from dotted_font_builder import FontBuilder, WeightName, SerifStyle, SlantStyle, WidthStyle, Glyph, opentype
 
 
 def main():
@@ -39,18 +39,18 @@ def main():
     builder.meta_info.version = '1.0.0'
     builder.meta_info.created_time = datetime.datetime.fromisoformat('2024-01-01T00:00:00Z')
     builder.meta_info.modified_time = builder.meta_info.created_time
-    builder.meta_info.family_name = 'My Pixel'
+    builder.meta_info.family_name = 'My Dotted'
     builder.meta_info.weight_name = WeightName.REGULAR
     builder.meta_info.serif_style = SerifStyle.SANS_SERIF
     builder.meta_info.slant_style = SlantStyle.NORMAL
     builder.meta_info.width_style = WidthStyle.MONOSPACED
-    builder.meta_info.manufacturer = 'Pixel Font Studio'
-    builder.meta_info.designer = 'TakWolf'
-    builder.meta_info.description = 'A demo pixel font.'
-    builder.meta_info.copyright_info = 'Copyright (c) TakWolf'
+    builder.meta_info.manufacturer = ''
+    builder.meta_info.designer = 'OverflowCat'
+    builder.meta_info.description = 'A demo dotted font.'
+    builder.meta_info.copyright_info = 'Copyright (c) OverflowCat'
     builder.meta_info.license_info = 'This Font Software is licensed under the SIL Open Font License, Version 1.1.'
-    builder.meta_info.vendor_url = 'https://github.com/TakWolf/pixel-font-builder'
-    builder.meta_info.designer_url = 'https://takwolf.com'
+    builder.meta_info.vendor_url = 'https://github.com/OverflowCat/dotted-font-builder'
+    builder.meta_info.designer_url = 'https://overflow.cat'
     builder.meta_info.license_url = 'https://openfontlicense.org'
     builder.meta_info.sample_text = 'Hello World!'
 
@@ -101,8 +101,8 @@ def main():
         ],
     ))
 
-    builder.save_otf(outputs_dir.joinpath('my-pixel.otf'))
-    builder.save_otf(outputs_dir.joinpath('my-pixel.woff2'), flavor=opentype.Flavor.WOFF2)
+    builder.save_otf(outputs_dir.joinpath('my-dotted.otf'))
+    builder.save_otf(outputs_dir.joinpath('my-dotted.woff2'), flavor=opentype.Flavor.WOFF2)
     builder.save_ttf(outputs_dir.joinpath('my-font.ttf'))
     builder.save_bdf(outputs_dir.joinpath('my-font.bdf'))
     builder.save_pcf(outputs_dir.joinpath('my-font.pcf'))

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dotted-font-builder"
-version = "0.0.28"
+version = "0.0.1"
 description = "A library that helps create dotted style fonts."
 readme = "README.md"
 license = { text = "MIT License" }
@@ -44,3 +44,6 @@ pythonpath = [
 addopts = [
     "--import-mode=importlib",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pixel_font_builder"]
